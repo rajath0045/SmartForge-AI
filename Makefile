@@ -2,7 +2,7 @@
 
 install:
 	python3 -m venv backend/.venv
-	backend/.venv/bin/pip install -r backend/requirements.txt
+	backend/.venv/bin/pip install -r backend/requirements-dev.txt
 	cd frontend && npm install
 
 seed:
@@ -21,4 +21,3 @@ build:
 	cd frontend && npm run build
 
 verify: test build
-

@@ -6,6 +6,7 @@ import { useAsyncData } from '../hooks';
 import { api } from '../services/api';
 import type { Plan } from '../types';
 import { Badge, KpiCard, MetricRow, money, PageHeader, Panel, Progress, SeverityBadge } from '../components/UI';
+import { SegmentedTabs } from '../components/SegmentedTabs';
 
 const tooltip = { background: '#172733', border: '1px solid #2d4657', borderRadius: 8, color: '#fff', fontSize: 12 };
 
@@ -15,7 +16,7 @@ export function CapacityPage() {
   const shown = capacities.filter((item) => view === 'all' || item.type === view);
   return (
     <div className="page-stack">
-      <PageHeader kicker="AVAILABLE-TO-PROMISE INPUT" title="Capacity planning" description="Available, committed and predicted capacity by machine, operation and critical skill for the two-week horizon." actions={<div className="segmented"><button className={view === 'all' ? 'active' : ''} onClick={() => setView('all')}>All</button><button className={view === 'Machine' ? 'active' : ''} onClick={() => setView('Machine')}>Machines</button><button className={view === 'Skill' ? 'active' : ''} onClick={() => setView('Skill')}>Skills</button></div>} />
+      <PageHeader kicker="AVAILABLE-TO-PROMISE INPUT" title="Capacity planning" description="Available, committed and predicted capacity by machine, operation and critical skill for the two-week horizon." actions={<SegmentedTabs label="Capacity view" value={view} onChange={setView} items={[{ value: 'all', label: 'All', count: capacities.length }, { value: 'Machine', label: 'Machines' }, { value: 'Skill', label: 'Skills' }]} />} />
       <div className="capacity-hero">
         <Panel className="constraint-panel">
           <div className="constraint-top"><div><span className="eyebrow">CURRENT PRODUCTION CONSTRAINT</span><h2>GRIND-01</h2><p>Cylindrical grinding · 8 dependent orders</p></div><Badge tone="critical" dot>CRITICAL</Badge></div>
@@ -85,7 +86,7 @@ export function ProfitabilityPage() {
         <Panel className="span-4" title="Margin quality" eyebrow="WHAT CHANGED"><div className="profit-driver good"><TrendingUp /><span><strong>+₹1.18L</strong><small>Better part-family sequencing reduced changeovers</small></span></div><div className="profit-driver bad"><TrendingDown /><span><strong>−₹68.5K</strong><small>PF-04 rework consumed 6.5 capacity hours</small></span></div><div className="profit-driver bad"><TrendingDown /><span><strong>−₹42K</strong><small>Generator recovery during prior outage</small></span></div><p className="explain-box"><Lightbulb />Protecting one extra GRIND-01 hour yields more contribution than optimizing four low-load drill hours.</p></Panel>
       </div>
       <Panel className="flush-panel">
-        <div className="table-toolbar"><div className="table-title"><h2>Order economics</h2><Badge tone="neutral">Top 10</Badge></div><div className="segmented"><button className={metric === 'margin' ? 'active' : ''} onClick={() => setMetric('margin')}>By contribution</button><button className={metric === 'revenue' ? 'active' : ''} onClick={() => setMetric('revenue')}>By revenue</button></div></div>
+        <div className="table-toolbar"><div className="table-title"><h2>Order economics</h2><Badge tone="neutral">Top 10</Badge></div><SegmentedTabs label="Order economics ranking" value={metric} onChange={setMetric} items={[{ value: 'margin', label: 'By contribution' }, { value: 'revenue', label: 'By revenue' }]} /></div>
         <div className="table-scroll"><table><thead><tr><th>Order</th><th>Customer</th><th>Revenue</th><th>Contribution</th><th>Penalty risk</th><th>Margin after risk</th><th>Delivery</th></tr></thead><tbody>{ranked.map((order) => <tr key={order.id}><td><strong>{order.id}</strong><small>{order.part}</small></td><td>{order.customer}<small>{order.tier}</small></td><td>{money(order.revenue)}</td><td className="text-healthy">{money(order.margin)}</td><td>{money(order.expectedPenalty)}</td><td><strong>{money(order.margin - order.expectedPenalty)}</strong></td><td><Badge tone={order.risk}>{order.deliveryProbability}%</Badge></td></tr>)}</tbody></table></div>
       </Panel>
     </div>

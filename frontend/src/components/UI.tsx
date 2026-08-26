@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowDownRight, ArrowUpRight, ChevronRight, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { RiskLevel } from '../types';
+import { AnimatedMetric } from './AnimatedMetric';
 
 export function money(value: number, compact = true): string {
   return new Intl.NumberFormat('en-IN', {
@@ -50,7 +51,7 @@ export function Panel({ children, className = '', title, eyebrow, action }: { ch
 export function PageHeader({ title, description, kicker, actions }: { title: string; description: string; kicker?: string; actions?: ReactNode }) {
   return (
     <header className="page-header">
-      <div>
+      <div className="page-header-copy">
         {kicker && <div className="page-kicker">{kicker}</div>}
         <h1>{title}</h1>
         <p>{description}</p>
@@ -63,12 +64,12 @@ export function PageHeader({ title, description, kicker, actions }: { title: str
 export function KpiCard({ label, value, detail, trend, trendLabel, tone = 'default', icon }: { label: string; value: string; detail?: string; trend?: number; trendLabel?: string; tone?: string; icon?: ReactNode }) {
   const positive = (trend ?? 0) >= 0;
   return (
-    <div className={`kpi-card kpi-${tone}`}>
+    <div className={`kpi-card kpi-${tone}`} data-tone={tone}>
       <div className="kpi-top">
         <span>{label}</span>
         {icon && <span className="kpi-icon">{icon}</span>}
       </div>
-      <strong>{value}</strong>
+      <strong className="kpi-value"><AnimatedMetric value={value} /></strong>
       {(detail || trend !== undefined) && (
         <div className="kpi-detail">
           {trend !== undefined && <span className={positive ? 'trend-positive' : 'trend-negative'}>{positive ? <ArrowUpRight /> : <ArrowDownRight />}{Math.abs(trend)}%</span>}
@@ -98,7 +99,7 @@ export function EmptyState({ title, description }: { title: string; description:
 }
 
 export function LoadingState({ label = 'Loading factory data' }: { label?: string }) {
-  return <div className="loading-state"><LoaderCircle className="spin" /><span>{label}</span></div>;
+  return <div className="loading-state"><div className="loading-orbit"><LoaderCircle className="spin" /></div><strong>{label}</strong><span>Synchronizing schedule, resources, and risk signals</span><div className="loading-skeleton"><i /><i /><i /></div></div>;
 }
 
 export function LinkArrow() {

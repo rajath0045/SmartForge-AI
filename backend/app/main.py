@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -16,7 +15,7 @@ from app.seed import seed_database
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    if os.getenv("AUTO_SEED", "true").lower() in {"1", "true", "yes"}:
+    if settings.auto_seed:
         seed_database()
     yield
 
@@ -24,6 +23,9 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
+    docs_url=f"{settings.api_prefix}/docs",
+    redoc_url=f"{settings.api_prefix}/redoc",
+    openapi_url=f"{settings.api_prefix}/openapi.json",
     description=(
         "Finite-capacity manufacturing planning and decision-support API for "
         "Sridhar Precision Works."

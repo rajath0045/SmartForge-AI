@@ -5,7 +5,7 @@ import random
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.core.database import Base, SessionLocal, engine, init_db
@@ -1297,6 +1297,13 @@ def seed_database(db: Session | None = None, *, force: bool = False) -> dict[str
     init_db()
     session = db or SessionLocal()
     try:
+        # Multiple Vercel instances can cold-start concurrently. Serialize the
+        # initial emptiness check and seed transaction when using PostgreSQL.
+        if session.bind is not None and session.bind.dialect.name == "postgresql":
+            session.execute(
+                text("SELECT pg_advisory_xact_lock(:lock_id)"),
+                {"lock_id": 1_397_573_190},
+            )
         existing = session.scalar(select(func.count()).select_from(Machine)) or 0
         if existing:
             return {

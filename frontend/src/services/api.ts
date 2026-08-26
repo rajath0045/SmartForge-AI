@@ -16,7 +16,8 @@ import type {
   ScheduleTask,
 } from '../types';
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8000/api/v1';
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+const API_URL = (configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api')).replace(/\/$/, '');
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {

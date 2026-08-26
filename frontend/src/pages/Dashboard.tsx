@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import {
-  AlertTriangle, ArrowRight, BadgeIndianRupee, Bolt, Bot, CheckCircle2, CircleGauge, Clock3, Factory,
+  AlertTriangle, ArrowRight, BadgeIndianRupee, Bolt, CheckCircle2, CircleGauge, Clock3, Factory,
   Gauge, HardHat, PackageCheck, ShieldCheck, Siren, TrendingUp, Wrench,
+  Workflow,
 } from 'lucide-react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { costBreakdown, dashboard as fallbackDashboard, machines, orders, risks, throughputTrend } from '../data/demo';
@@ -145,7 +146,7 @@ export function ControlTower() {
         <Panel className="span-4" title="Incoming RFQ" eyebrow="CAPABLE-TO-PROMISE" action={<Badge tone="healthy">GOOD FIT</Badge>}>
           <div className="rfq-peek"><div className="rfq-title"><span>RFQ-006</span><strong>AX-206 · 1,200 pcs</strong><small>Apex Driveline · Tier 1</small></div><div className="rfq-score"><strong>82</strong><span>attractiveness</span></div></div>
           <div className="resource-list"><MetricRow label="Projected revenue" value="₹8.4L" /><MetricRow label="Expected margin" value="₹2.04L" tone="healthy" /><MetricRow label="Delivery confidence" value="94%" /><MetricRow label="GRIND-01 after insert" value="98.7%" tone="warning" /></div>
-          <p className="explain-box"><Bot />Recommendation uses finite capacity and risk-adjusted cost logic. It is not a generated text guess.</p>
+          <p className="explain-box"><Workflow />Recommendation uses finite capacity, routing feasibility, and risk-adjusted contribution logic.</p>
           <Link className="button button-primary full-button" to="/acceptance">Evaluate order <ArrowRight /></Link>
         </Panel>
       </div>

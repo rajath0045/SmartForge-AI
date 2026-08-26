@@ -16,7 +16,7 @@ def client():
 
 def test_live_schedule_generation_and_plan_comparison(client: TestClient):
     generated = client.post(
-        "/api/v1/schedule/generate",
+        "/api/schedule/generate",
         json={"mode": "MOST_ROBUST", "exact": False},
     )
     assert generated.status_code == 200
@@ -27,7 +27,7 @@ def test_live_schedule_generation_and_plan_comparison(client: TestClient):
     assert len(schedule["operations"]) == 96
     assert schedule["violations"] == []
 
-    response = client.get("/api/v1/schedule/comparison")
+    response = client.get("/api/schedule/comparison")
     assert response.status_code == 200
     comparison = response.json()
     assert len(comparison["plans"]) == 3
@@ -41,7 +41,7 @@ def test_live_schedule_generation_and_plan_comparison(client: TestClient):
 
 def test_rfq_returns_explainable_validated_decision(client: TestClient):
     response = client.post(
-        "/api/v1/rfq/evaluate",
+        "/api/rfq/evaluate",
         json={
             "customer": "Apex Driveline",
             "tier": "Tier 1",
@@ -65,7 +65,7 @@ def test_rfq_returns_explainable_validated_decision(client: TestClient):
 
 def test_disruption_and_simulation_return_valid_recovery_plans(client: TestClient):
     disruption = client.post(
-        "/api/v1/disruptions",
+        "/api/disruptions",
         json={
             "type": "MACHINE_BREAKDOWN",
             "resource": "GRIND-01",
@@ -82,7 +82,7 @@ def test_disruption_and_simulation_return_valid_recovery_plans(client: TestClien
     assert recovery["ownerCall"]["contact"]
 
     simulation = client.post(
-        "/api/v1/simulation/run",
+        "/api/simulation/run",
         json={"scenario": "grinder-breakdown", "magnitude": 8},
     )
     assert simulation.status_code == 200
@@ -93,7 +93,7 @@ def test_disruption_and_simulation_return_valid_recovery_plans(client: TestClien
     assert scenario["recommendation"]
 
     power = client.post(
-        "/api/v1/simulation/run",
+        "/api/simulation/run",
         json={"scenario": "power-failure", "magnitude": 8},
     )
     assert power.status_code == 200
@@ -103,7 +103,7 @@ def test_disruption_and_simulation_return_valid_recovery_plans(client: TestClien
     assert power_scenario["delivery"] <= power_scenario["baseline"]["delivery"]
 
     investment = client.post(
-        "/api/v1/simulation/run",
+        "/api/simulation/run",
         json={"scenario": "new-grinder", "magnitude": 1},
     )
     assert investment.status_code == 200

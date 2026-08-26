@@ -59,7 +59,7 @@ flowchart LR
   end
   DB[(SQLite\nPostgreSQL-ready)]
 
-  UI -->|/api/v1| REST
+  UI -->|/api| REST
   REST --> DIGITAL
   REST --> DECIDE
   DECIDE --> SCHED --> VALID
@@ -105,13 +105,37 @@ make web
 ```
 
 Open [http://localhost:5173](http://localhost:5173). API documentation is available
-at [http://localhost:8000/docs](http://localhost:8000/docs).
+at [http://localhost:8000/api/docs](http://localhost:8000/api/docs).
 
 To run in containers:
 
 ```bash
 docker compose up --build
 ```
+
+### Vercel deployment
+
+Set the Vercel project's Framework Preset to **Services**. The root
+`vercel.json` builds the Vite application from `frontend/`, imports FastAPI as
+`app.main:app` from `backend/`, routes `/api/*` to FastAPI, and sends all other
+paths to the frontend SPA.
+
+Use these production environment variables:
+
+```text
+VITE_API_URL=/api
+API_PREFIX=/api
+AUTO_SEED=true
+DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
+```
+
+`CORS_ORIGINS` is not required for same-origin `/api` calls. Set it to a
+comma-separated list of exact origins only if another web origin must call the
+API. If `DATABASE_URL` is omitted on Vercel, SmartForge uses
+`/tmp/smartforge.db`; that is suitable only for a disposable demo because the
+file can disappear between function instances or cold starts. Use managed
+PostgreSQL for persistent production data, and keep the connection string in
+Vercel rather than in Git.
 
 No login is required for the deterministic assessment demo. Authentication and role
 permissions are identified as production hardening work, not simulated in the UI.
@@ -131,7 +155,7 @@ as invalid rather than silently displayed.
 
 ## API map
 
-All endpoints are under `/api/v1`.
+All endpoints are under `/api`.
 
 | Workflow | Endpoint |
 |---|---|
@@ -147,7 +171,7 @@ All endpoints are under `/api/v1`.
 | Analytics | `GET /analytics/capacity`, `/analytics/profitability`, `/analytics/bottlenecks` |
 
 The exact generated schema and request examples are visible in Swagger/OpenAPI at
-`/docs` while the API is running.
+`/api/docs` while the API is running.
 
 ## Scheduling policies
 

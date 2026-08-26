@@ -15,11 +15,12 @@ frontend/.vite/
 
 # Local configuration
 .env
-.env.local
+.env.*
+!.env.example
 *.log
 .DS_Store
+.vercel/
 
 # Editors
 .idea/
 .vscode/
-

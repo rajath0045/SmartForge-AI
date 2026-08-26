@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, BatteryCharging, Bell, Boxes, CalendarRange, ChevronLeft, ChevronRight,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { ConnectionMode } from '../types';
 import { Badge, LoadingState } from './UI';
+import { CommandPalette, type CommandPaletteItem } from './CommandPalette';
 
 interface NavEntry { label: string; to: string; icon: typeof Factory; }
 interface NavGroup { label: string; entries: NavEntry[]; }
@@ -39,20 +40,39 @@ const navGroups: NavGroup[] = [
 ];
 
 const allEntries = navGroups.flatMap((group) => group.entries);
+const commandDescriptions: Record<string, string> = {
+  '/control-tower': 'Live management queue and factory pulse',
+  '/dashboard': 'Executive delivery, utilization, and financial KPIs',
+  '/risks': 'Prioritized problems, exposure, and corrective actions',
+  '/orders': 'Committed production orders and delivery confidence',
+  '/acceptance': 'Evaluate an RFQ against finite capacity',
+  '/schedule': 'Machine-level two-week production schedule',
+  '/capacity': 'Constraint load and available-to-promise capacity',
+  '/plan-comparison': 'Compare cost, service, and robustness trade-offs',
+  '/today': 'Shift-ready operator production board',
+  '/disruptions': 'Inject an event and generate a recovery plan',
+  '/scenarios': 'Test operational and investment scenarios',
+  '/machines': 'Machine state, utilization, and capabilities',
+  '/machine-health': 'Failure risk and preventive maintenance signals',
+  '/workforce': 'Shift coverage and skill qualification matrix',
+  '/energy': 'Power availability and generator economics',
+  '/profitability': 'Order contribution and risk-adjusted margin',
+};
+const commandItems: CommandPaletteItem[] = navGroups.flatMap((group) => group.entries.map((entry) => ({
+  ...entry,
+  group: group.label,
+  description: commandDescriptions[entry.to],
+})));
 
 export function AppLayout({ connection }: { connection: ConnectionMode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [commandOpen, setCommandOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const current = allEntries.find((entry) => location.pathname === entry.to || (entry.to !== '/' && location.pathname.startsWith(`${entry.to}/`)));
-  const searchResults = useMemo(() => search.trim().length > 1
-    ? allEntries.filter((entry) => entry.label.toLowerCase().includes(search.toLowerCase())).slice(0, 5)
-    : [], [search]);
 
   function chooseResult(to: string) {
-    setSearch('');
     navigate(to);
   }
 
@@ -101,12 +121,12 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
             <div className="breadcrumb"><span>Plant 01</span><ChevronRight /><strong>{current?.label ?? 'SmartForge'}</strong></div>
           </div>
           <div className="topbar-right">
-            <div className="global-search">
+            <button className="global-search command-trigger" onClick={() => setCommandOpen(true)} aria-label="Open command palette">
               <Search />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find a page…" aria-label="Find a page" onKeyDown={(event) => { if (event.key === 'Enter' && searchResults[0]) chooseResult(searchResults[0].to); }} />
+              <span>Search plant workflows…</span>
               <kbd>⌘K</kbd>
-              {searchResults.length > 0 && <div className="search-results">{searchResults.map((result) => <button key={result.to} onClick={() => chooseResult(result.to)}><result.icon />{result.label}<ChevronRight /></button>)}</div>}
-            </div>
+            </button>
+            <button className="icon-button mobile-command" onClick={() => setCommandOpen(true)} aria-label="Search plant workflows"><Search /></button>
             <Badge tone={connection === 'live' ? 'healthy' : connection === 'demo' ? 'warning' : 'neutral'} dot>
               {connection === 'live' ? 'Live API' : connection === 'demo' ? 'Demo data' : 'Connecting'}
             </Badge>
@@ -115,9 +135,17 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
             <div className="user-chip"><span>RK</span><div><strong>Raj Kumar</strong><small>Plant Manager</small></div></div>
           </div>
         </header>
+        <div className="operations-strip" aria-label="Current operating context">
+          <div className="operations-strip-title"><RadioTower /><span><strong>Live operating context</strong><small>Tue 01 Sep · Shift 1</small></span></div>
+          <div><i className="signal signal-good" /><span>Schedule</span><strong>Validated</strong></div>
+          <div><i className="signal signal-critical" /><span>Constraint</span><strong>GRIND-01 · 96.2%</strong></div>
+          <div><i className="signal signal-warning" /><span>Decision queue</span><strong>3 due before 10:00</strong></div>
+          <div><i className="signal signal-good" /><span>Model</span><strong>Synced 42 sec ago</strong></div>
+        </div>
         <main className="main-content"><Suspense fallback={<LoadingState label="Loading workspace" />}><Outlet /></Suspense></main>
         <footer className="app-footer"><span>SmartForge planning model · Seed 42</span><span>Last validated schedule: 01 Sep 2026, 08:44</span></footer>
       </div>
+      <CommandPalette items={commandItems} open={commandOpen} onOpenChange={setCommandOpen} onSelect={chooseResult} />
     </div>
   );
 }

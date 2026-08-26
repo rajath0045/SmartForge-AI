@@ -23,7 +23,7 @@ bottleneck capacity.
 
 The seeded 1–15 September horizon currently produces the following independently
 validated heuristic schedules. Values are recalculated by
-`GET /api/v1/schedule/comparison`; this table records the reproducible assessment
+`GET /api/schedule/comparison`; this table records the reproducible assessment
 snapshot rather than replacing the live calculation.
 
 | Metric | Cheapest | Most On-Time | Most Robust |

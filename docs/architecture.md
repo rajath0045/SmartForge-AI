@@ -6,7 +6,7 @@ boundaries that can be split later if production load justifies it.
 
 ```mermaid
 flowchart LR
-    UI[React control tower] -->|REST /api/v1| API[FastAPI application]
+    UI[React control tower] -->|REST /api| API[FastAPI application]
     API --> DT[Factory digital-twin services]
     API --> DEC[Decision services]
     DT --> DB[(SQLite / PostgreSQL-ready)]
@@ -45,4 +45,3 @@ SQLite is the zero-configuration demonstration database. SQLAlchemy keeps the mo
 portable to PostgreSQL. Docker Compose starts both tiers; a production deployment
 would use PostgreSQL, persistent object/log storage, authentication, and a queued
 solver worker for long optimization runs.
-
