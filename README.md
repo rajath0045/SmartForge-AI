@@ -985,6 +985,7 @@ These are not implemented claims:
 
 ## Additional documentation
 
+- [Project presentation and implementation approach](docs/project-presentation-and-approach.md)
 - [Architecture](docs/architecture.md)
 - [Scheduling model](docs/scheduling-model.md)
 - [Assumptions and limitations](docs/assumptions.md)
