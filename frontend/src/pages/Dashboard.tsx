@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle, ArrowRight, BadgeIndianRupee, Bolt, CheckCircle2, CircleGauge, Clock3, Factory,
@@ -9,11 +10,12 @@ import { costBreakdown, dashboard as fallbackDashboard, machines, orders, risks,
 import { useAsyncData } from '../hooks';
 import { api } from '../services/api';
 import { Badge, KpiCard, LinkArrow, MetricRow, money, PageHeader, Panel, Progress, SeverityBadge } from '../components/UI';
-
-const tooltipStyle = { background: '#172733', border: '1px solid #2d4657', borderRadius: 8, color: '#fff', fontSize: 12 };
+import { ChartTooltip, InteractiveChartCard, TimeRangeSelector } from '../components/Analytics';
 
 export function ExecutiveDashboard() {
   const { data } = useAsyncData(api.dashboard, fallbackDashboard);
+  const [outputRange, setOutputRange] = useState<'3D' | '7D'>('7D');
+  const outputData = outputRange === '3D' ? throughputTrend.slice(-3) : throughputTrend;
   const riskyOrders = orders.filter((order) => order.status === 'AT_RISK' || order.status === 'DELAYED').slice(0, 4);
   return (
     <div className="page-stack">
@@ -32,28 +34,28 @@ export function ExecutiveDashboard() {
       </div>
 
       <div className="dashboard-grid executive-grid">
-        <Panel className="span-8" title="Output vs plan" eyebrow="LAST 7 PRODUCTION DAYS" action={<Badge tone="healthy" dot>96.1% plan attained</Badge>}>
+        <InteractiveChartCard className="span-8" title="Output vs plan" eyebrow={`${outputRange} PRODUCTION VIEW`} insight="Actual output recovered after Thursday's grinding constraint, closing the seven-day plan gap to 3.9%." action={<><Badge tone="healthy" dot>96.1% attained</Badge><TimeRangeSelector value={outputRange} onChange={setOutputRange} items={[{ value: '3D', label: '3D' }, { value: '7D', label: '7D' }]} /></>} details={<div className="chart-detail-grid"><span><small>Best attainment</small><strong>Friday · 101.4%</strong></span><span><small>Largest gap</small><strong>Thursday · −8.7%</strong></span><span><small>Recovery driver</small><strong>Grinding overtime</strong></span></div>}>
           <div className="chart-lg" role="img" aria-label="Daily planned and actual production output">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={throughputTrend} margin={{ top: 12, right: 12, bottom: 0, left: -20 }}>
+              <AreaChart data={outputData} margin={{ top: 12, right: 12, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="actualFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#d08a2e" stopOpacity={0.28} /><stop offset="100%" stopColor="#d08a2e" stopOpacity={0.02} /></linearGradient>
                 </defs>
                 <CartesianGrid stroke="#e7ecef" strokeDasharray="3 4" vertical={false} />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#6b7c87', fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7c87', fontSize: 11 }} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: '#d7dee2' }} />
+                <Tooltip content={<ChartTooltip formatter={(value, name) => `${name}: ${value.toLocaleString('en-IN')} pcs`} />} cursor={{ stroke: '#d7dee2' }} />
                 <Area type="monotone" dataKey="planned" stroke="#8aa0ad" strokeDasharray="5 4" fill="none" strokeWidth={2} />
                 <Area type="monotone" dataKey="actual" stroke="#c27b22" fill="url(#actualFill)" strokeWidth={2.5} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
           <div className="chart-legend"><span><i style={{ background: '#c27b22' }} />Actual output</span><span><i className="legend-line" />Plan</span><span className="muted">Units completed at inspection</span></div>
-        </Panel>
+        </InteractiveChartCard>
         <Panel className="span-4" title="Cost structure" eyebrow="CURRENT HORIZON" action={<strong>{money(data.productionCost)}</strong>}>
           <div className="donut-wrap">
             <div className="chart-donut" role="img" aria-label="Production cost breakdown">
-              <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={costBreakdown} dataKey="value" nameKey="name" innerRadius={54} outerRadius={76} paddingAngle={2}>{costBreakdown.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie><Tooltip contentStyle={tooltipStyle} formatter={(value) => money(Number(value))} /></PieChart></ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={costBreakdown} dataKey="value" nameKey="name" innerRadius={54} outerRadius={76} paddingAngle={2}>{costBreakdown.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie><Tooltip content={<ChartTooltip formatter={(value) => money(value)} />} /></PieChart></ResponsiveContainer>
               <div className="donut-center"><strong>₹58.1L</strong><span>Total cost</span></div>
             </div>
             <div className="legend-list">{costBreakdown.map((item) => <div key={item.name}><span><i style={{ background: item.color }} />{item.name}</span><strong>{Math.round(item.value / data.productionCost * 100)}%</strong></div>)}</div>
@@ -141,7 +143,7 @@ export function ControlTower() {
 
       <div className="dashboard-grid">
         <Panel className="span-8" title="Fourteen-day load profile" eyebrow="FINITE CAPACITY" action={<Link to="/schedule" className="text-link">Open schedule <ArrowRight /></Link>}>
-          <div className="chart-md"><ResponsiveContainer width="100%" height="100%"><BarChart data={machines.slice(0, 9)} layout="vertical" margin={{ left: 4, right: 26 }}><CartesianGrid stroke="#e7ecef" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} /><YAxis type="category" dataKey="id" width={66} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#425563' }} /><Tooltip contentStyle={tooltipStyle} formatter={(value) => `${value}%`} /><Bar dataKey="utilization" radius={[0, 4, 4, 0]}>{machines.slice(0, 9).map((machine) => <Cell key={machine.id} fill={machine.utilization >= 90 ? '#ad554c' : machine.utilization >= 82 ? '#d08a2e' : '#52748b'} />)}</Bar></BarChart></ResponsiveContainer></div>
+          <div className="chart-md"><ResponsiveContainer width="100%" height="100%"><BarChart data={machines.slice(0, 9)} layout="vertical" margin={{ left: 4, right: 26 }}><CartesianGrid stroke="#e7ecef" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} /><YAxis type="category" dataKey="id" width={66} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#425563' }} /><Tooltip content={<ChartTooltip formatter={(value) => `${value.toFixed(1)}% utilized`} />} /><Bar dataKey="utilization" radius={[0, 4, 4, 0]}>{machines.slice(0, 9).map((machine) => <Cell key={machine.id} fill={machine.utilization >= 90 ? '#ad554c' : machine.utilization >= 82 ? '#d08a2e' : '#52748b'} />)}</Bar></BarChart></ResponsiveContainer></div>
         </Panel>
         <Panel className="span-4" title="Incoming RFQ" eyebrow="CAPABLE-TO-PROMISE" action={<Badge tone="healthy">GOOD FIT</Badge>}>
           <div className="rfq-peek"><div className="rfq-title"><span>RFQ-006</span><strong>AX-206 · 1,200 pcs</strong><small>Apex Driveline · Tier 1</small></div><div className="rfq-score"><strong>82</strong><span>attractiveness</span></div></div>

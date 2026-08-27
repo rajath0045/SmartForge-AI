@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { ConnectionMode } from '../types';
 import { Badge, LoadingState } from './UI';
+import { LiveStatusIndicator } from './Analytics';
 import { CommandPalette, type CommandPaletteItem } from './CommandPalette';
 
 interface NavEntry { label: string; to: string; icon: typeof Factory; }
@@ -140,10 +141,10 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
         </header>
         <div className="operations-strip" aria-label="Current operating context">
           <div className="operations-strip-title"><RadioTower /><span><strong>Live operating context</strong><small>Tue 01 Sep · Shift 1</small></span></div>
-          <div><i className="signal signal-good" /><span>Schedule</span><strong>Validated</strong></div>
-          <div><i className="signal signal-critical" /><span>Constraint</span><strong>GRIND-01 · 96.2%</strong></div>
-          <div><i className="signal signal-warning" /><span>Decision queue</span><strong>3 due before 10:00</strong></div>
-          <div><i className="signal signal-good" /><span>Model</span><strong>Synced 42 sec ago</strong></div>
+          <div><LiveStatusIndicator label="Schedule" detail="Validated" /></div>
+          <div><LiveStatusIndicator label="Constraint" detail="GRIND-01 · 96.2%" tone="critical" /></div>
+          <div><LiveStatusIndicator label="Decision queue" detail="3 due before 10:00" tone="warning" /></div>
+          <div><LiveStatusIndicator label="Model" detail="Synced 42 sec ago" /></div>
         </div>
         <motion.main
           className="main-content"

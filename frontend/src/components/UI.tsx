@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { ArrowDownRight, ArrowUpRight, ChevronRight, CircleAlert, LoaderCircle } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { ChevronRight, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { RiskLevel } from '../types';
-import { AnimatedMetric } from './AnimatedMetric';
+import { PremiumMetricCard } from './Analytics';
 
 export function money(value: number, compact = true): string {
   return new Intl.NumberFormat('en-IN', {
@@ -64,30 +63,7 @@ export function PageHeader({ title, description, kicker, actions }: { title: str
 }
 
 export function KpiCard({ label, value, detail, trend, trendLabel, tone = 'default', icon }: { label: string; value: string; detail?: string; trend?: number; trendLabel?: string; tone?: string; icon?: ReactNode }) {
-  const positive = (trend ?? 0) >= 0;
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.div
-      className={`kpi-card kpi-${tone}`}
-      data-tone={tone}
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={reduceMotion ? undefined : { y: -3 }}
-      transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="kpi-top">
-        <span>{label}</span>
-        {icon && <span className="kpi-icon">{icon}</span>}
-      </div>
-      <strong className="kpi-value"><AnimatedMetric value={value} /></strong>
-      {(detail || trend !== undefined) && (
-        <div className="kpi-detail">
-          {trend !== undefined && <span className={positive ? 'trend-positive' : 'trend-negative'}>{positive ? <ArrowUpRight /> : <ArrowDownRight />}{Math.abs(trend)}%</span>}
-          <span>{trendLabel ?? detail}</span>
-        </div>
-      )}
-    </motion.div>
-  );
+  return <PremiumMetricCard label={label} value={value} detail={detail} trend={trend} trendLabel={trendLabel} tone={tone} icon={icon} />;
 }
 
 export function Progress({ value, tone, label }: { value: number; tone?: string; label?: string }) {

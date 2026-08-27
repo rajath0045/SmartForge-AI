@@ -17,6 +17,7 @@ export function OrdersPage() {
     return matchesQuery && (tier === 'ALL' || order.tier === tier) && (status === 'ALL' || order.status === status);
   }), [orders, query, tier, status]);
   const committedRevenue = orders.reduce((sum, order) => sum + order.revenue, 0);
+  const statusDistribution = ['PLANNED', 'IN_PROGRESS', 'AT_RISK', 'DELAYED'].map((key) => ({ key, count: orders.filter((order) => order.status === key).length }));
 
   return (
     <div className="page-stack">
@@ -27,6 +28,10 @@ export function OrdersPage() {
         <KpiCard label="At risk / delayed" value={String(orders.filter((order) => ['AT_RISK', 'DELAYED'].includes(order.status)).length)} detail="₹3.6L penalty exposure" tone="danger" icon={<CalendarClock />} />
         <KpiCard label="Weighted confidence" value="91.8%" detail="Risk-adjusted delivery" icon={<ShieldCheck />} />
       </div>
+      <Panel className="order-distribution-panel" title="Delivery portfolio" eyebrow="ORDER STATUS DISTRIBUTION" action={<button className="text-link" onClick={() => setStatus('ALL')}>Show all orders</button>}>
+        <div className="order-distribution-track" aria-label="Order status distribution">{statusDistribution.map((item) => <button key={item.key} className={`distribution-${item.key.toLowerCase()} ${status === item.key ? 'selected' : ''}`} style={{ flexGrow: Math.max(1, item.count) }} onClick={() => setStatus(status === item.key ? 'ALL' : item.key)}><span>{item.count}</span></button>)}</div>
+        <div className="order-distribution-legend">{statusDistribution.map((item) => <button key={item.key} onClick={() => setStatus(status === item.key ? 'ALL' : item.key)}><i className={`distribution-${item.key.toLowerCase()}`} /><span>{item.key.replace('_', ' ')}</span><strong>{item.count}</strong></button>)}</div>
+      </Panel>
       <Panel className="flush-panel orders-panel">
         <div className="table-toolbar">
           <div className="table-title"><h2>Order book</h2><Badge tone="neutral">{filtered.length} shown</Badge></div>

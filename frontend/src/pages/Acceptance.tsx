@@ -1,9 +1,10 @@
 import { FormEvent, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, BadgeIndianRupee, CalendarCheck, Check, CircleHelp, Factory, Gauge, LoaderCircle, PackageCheck, RotateCcw, ShieldCheck, TriangleAlert, UsersRound, X, Zap } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, CalendarCheck, Check, Factory, Gauge, LoaderCircle, PackageCheck, RotateCcw, ShieldCheck, TriangleAlert, UsersRound, X, Zap } from 'lucide-react';
 import { api } from '../services/api';
 import type { RfqInput, RfqResult, Tier } from '../types';
 import { Badge, MetricRow, money, PageHeader, Panel, Progress } from '../components/UI';
+import { ExpandableAnalyticsPanel, RadialMeter } from '../components/Analytics';
 
 const operations = ['Turning', 'Milling', 'Drilling', 'Grinding', 'Inspection'];
 const decisionGates = [
@@ -95,7 +96,7 @@ function AcceptanceResult({ result }: { result: RfqResult }) {
   return (
     <div className="result-stack">
       <Panel className={`decision-result decision-${tone}`}>
-        <div className="decision-result-top"><span className="decision-symbol">{reject ? <X /> : caution ? <TriangleAlert /> : <Check />}</span><div><div className="eyebrow">RECOMMENDED DECISION</div><h2>{result.decision}</h2><p>Delivery confidence <strong>{result.confidence}%</strong> · attractiveness score <strong>{result.score}/100</strong></p></div></div>
+        <div className="decision-result-top"><span className="decision-symbol">{reject ? <X /> : caution ? <TriangleAlert /> : <Check />}</span><div><div className="eyebrow">RECOMMENDED DECISION</div><h2>{result.decision}</h2><p>Delivery confidence <strong>{result.confidence}%</strong> · attractiveness score <strong>{result.score}/100</strong></p></div><RadialMeter value={result.confidence} label="CONF" tone={tone} size={70} /></div>
         {result.recommendedDate !== result.requestedDate && <div className="promise-date"><CalendarCheck /><span><small>Requested date</small><strong>{result.requestedDate}</strong></span><ArrowRight /><span><small>Recommended promise</small><strong>{result.recommendedDate}</strong></span></div>}
         <div className="confidence-meter"><div><span>Delivery confidence</span><strong>{result.confidence}%</strong></div><Progress value={result.confidence} tone={tone} /></div>
       </Panel>
@@ -106,9 +107,9 @@ function AcceptanceResult({ result }: { result: RfqResult }) {
       <Panel title="Capacity gates" eyebrow="INSERTION CHECK">
         <div className="capacity-check-list">{result.capacityChecks.map((check) => <div key={check.label}><span className={`check-state state-${check.state.toLowerCase()}`}>{check.state === 'LOW' ? <Check /> : <TriangleAlert />}</span><span><strong>{check.label}</strong><small>{check.value}</small></span><Badge tone={check.state}>{check.state === 'LOW' ? 'PASS' : check.state}</Badge></div>)}</div>
       </Panel>
-      <Panel title="Why this recommendation" eyebrow="EXPLAINABLE RULES" action={<CircleHelp />}>
+      <ExpandableAnalyticsPanel title="Why this recommendation" eyebrow="EXPLAINABLE RULES" summary={`${result.reasons.length} decision rules · expand reasoning`}>
         <ol className="reason-list">{result.reasons.map((reason, index) => <li key={reason}><span>{index + 1}</span><p>{reason}</p></li>)}</ol>
-      </Panel>
+      </ExpandableAnalyticsPanel>
     </div>
   );
 }

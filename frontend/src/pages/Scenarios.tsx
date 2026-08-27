@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Check, Factory, GraduationCap, Hammer, LoaderCircle, PackagePlus, Play, ShieldCheck, Sun, Truck, UserMinus, Wrench, Zap } from 'lucide-react';
 import { api } from '../services/api';
 import type { ScenarioResult } from '../types';
+import { InsightCard } from '../components/Analytics';
 import { Badge, money, PageHeader, Panel, Progress } from '../components/UI';
 
 const scenarios = [
@@ -29,6 +30,11 @@ export function ScenariosPage() {
   return (
     <div className="page-stack scenario-page">
       <PageHeader kicker="WHAT-IF SIMULATOR" title="Test a decision before changing the factory" description="Recalculate delivery, cost, profit and bottleneck load against the approved robust baseline." actions={<Badge tone="neutral">DETERMINISTIC · SEED 42</Badge>} />
+      <div className="scenario-insight-grid" aria-label="Approved plan baseline">
+        <InsightCard icon={<ShieldCheck />} label="Delivery confidence" value="95%" detail="Approved robust plan" tone="healthy" />
+        <InsightCard icon={<Factory />} label="Expected profit" value="₹21.8L" detail="After operating risk" />
+        <InsightCard icon={<Wrench />} label="Constraint load" value="96.2%" detail="GRIND-01 requires attention" tone="warning" />
+      </div>
       <div className="scenario-layout">
         <Panel className="scenario-input" title="Choose an intervention" eyebrow="SCENARIO DESIGN">
           <div className="scenario-grid">{scenarios.map((scenario) => <button key={scenario.id} className={scenarioId === scenario.id ? 'selected' : ''} onClick={() => choose(scenario.id)}><scenario.icon /><span><strong>{scenario.label}</strong><small>{scenario.help}</small></span>{scenarioId === scenario.id && <Check />}</button>)}</div>

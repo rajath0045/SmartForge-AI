@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { AlertOctagon, ArrowRight, Bolt, Check, CircleAlert, Clock3, Factory, LoaderCircle, PackageX, Phone, RefreshCw, ShieldAlert, Siren, TriangleAlert, UserMinus, Wrench } from 'lucide-react';
+import { CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts';
 import { risks as fallbackRisks } from '../data/demo';
 import { useAsyncData } from '../hooks';
 import { api } from '../services/api';
 import type { DisruptionInput, ReplanResult, RiskItem, RiskLevel } from '../types';
 import { Badge, KpiCard, MetricRow, money, PageHeader, Panel, SeverityBadge } from '../components/UI';
+import { ChartTooltip, InteractiveChartCard } from '../components/Analytics';
 
 const categoryIcons = { DELIVERY: PackageX, MACHINE: Wrench, LABOUR: UserMinus, MATERIAL: Factory, POWER: Bolt, QUALITY: CircleAlert, CAPACITY: ShieldAlert };
 
@@ -16,11 +18,15 @@ export function RisksPage() {
   const [expanded, setExpanded] = useState<string | null>('RSK-101');
   useEffect(() => { setItems(remoteRisks); }, [remoteRisks]);
   const shown = useMemo(() => items.filter((risk) => Boolean(risk.future) === (tab === 'future') && (severity === 'ALL' || risk.severity === severity)), [items, tab, severity]);
+  const riskMatrix = useMemo(() => items.map((risk) => ({ name: risk.title, probability: risk.probability, impact: risk.financialImpact / 100_000, exposure: risk.probability * risk.financialImpact / 100, severity: risk.severity })), [items]);
   function acknowledge(id: string) { setItems((current) => current.map((risk) => risk.id === id ? { ...risk, status: 'MITIGATED' } : risk)); }
   return (
     <div className="page-stack risks-page">
       <PageHeader kicker="PROBLEMS & RISK CONTROL CENTER" title="See the problem before it becomes a penalty" description="Current exceptions, forward risk signals and financially justified management actions in one queue." actions={<button className="button button-secondary" onClick={() => window.print()}>Export action log</button>} />
       <div className="kpi-grid kpi-grid-4 compact-kpis"><KpiCard label="Critical now" value={String(items.filter((risk) => !risk.future && risk.severity === 'CRITICAL').length)} detail="Immediate decision" tone="danger" icon={<Siren />} /><KpiCard label="Open exposure" value={money(items.filter((risk) => risk.status !== 'MITIGATED').reduce((sum, risk) => sum + risk.financialImpact, 0))} detail="Expected-value estimate" icon={<AlertOctagon />} /><KpiCard label="Future signals" value={String(items.filter((risk) => risk.future).length)} detail="Next 14 days" icon={<Clock3 />} /><KpiCard label="Awaiting approval" value={String(items.filter((risk) => risk.status === 'APPROVAL_REQUIRED').length)} detail="₹1.85L avoidable loss" icon={<ShieldAlert />} /></div>
+      <InteractiveChartCard title="Risk exposure matrix" eyebrow="PROBABILITY × FINANCIAL IMPACT" className="risk-matrix-panel" insight="Items in the upper-right require management action first; bubble size represents probability-weighted expected loss." details={<div className="chart-detail-grid"><span><small>Highest exposure</small><strong>{[...items].sort((a, b) => b.financialImpact * b.probability - a.financialImpact * a.probability)[0]?.title}</strong></span><span><small>Open risks</small><strong>{items.filter((risk) => risk.status !== 'MITIGATED').length}</strong></span><span><small>14-day horizon</small><strong>{money(items.reduce((sum, risk) => sum + risk.financialImpact * risk.probability / 100, 0))} expected loss</strong></span></div>}>
+        <div className="risk-matrix-chart"><ResponsiveContainer width="100%" height="100%"><ScatterChart margin={{ top: 10, right: 24, bottom: 8, left: 8 }}><CartesianGrid strokeDasharray="3 5" /><XAxis type="number" dataKey="probability" name="Probability" unit="%" domain={[0, 100]} tickLine={false} axisLine={false} /><YAxis type="number" dataKey="impact" name="Impact" unit="L" tickLine={false} axisLine={false} /><ZAxis type="number" dataKey="exposure" range={[90, 420]} /><Tooltip content={<ChartTooltip formatter={(value, name) => name === 'Impact' ? `₹${value.toFixed(1)}L` : `${value.toFixed(0)}%`} />} /><Scatter data={riskMatrix}>{riskMatrix.map((risk) => <Cell key={risk.name} fill={risk.severity === 'CRITICAL' ? '#c77870' : risk.severity === 'HIGH' ? '#b88770' : risk.severity === 'MEDIUM' ? '#c9aa73' : '#89aa91'} />)}</Scatter></ScatterChart></ResponsiveContainer><span className="matrix-label matrix-low">MONITOR</span><span className="matrix-label matrix-high">ACT NOW</span></div>
+      </InteractiveChartCard>
       <div className="risk-toolbar"><div className="tab-list"><button className={tab === 'current' ? 'active' : ''} onClick={() => setTab('current')}>Current problems <Badge tone="critical">{items.filter((risk) => !risk.future).length}</Badge></button><button className={tab === 'future' ? 'active' : ''} onClick={() => setTab('future')}>Expected future problems <Badge tone="warning">{items.filter((risk) => risk.future).length}</Badge></button></div><label className="select-field"><select value={severity} onChange={(event) => setSeverity(event.target.value as 'ALL' | RiskLevel)}><option value="ALL">All severity</option><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select></label></div>
       <div className="risk-list">{shown.map((risk) => {
         const Icon = categoryIcons[risk.category];
