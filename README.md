@@ -985,6 +985,7 @@ These are not implemented claims:
 
 ## Additional documentation
 
+- [PowerPoint presentation (download)](docs/presentation/SmartForge-Technical-Presentation.pptx)
 - [Project presentation and implementation approach](docs/project-presentation-and-approach.md)
 - [Architecture](docs/architecture.md)
 - [Scheduling model](docs/scheduling-model.md)

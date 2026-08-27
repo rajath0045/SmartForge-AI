@@ -192,10 +192,10 @@ Replace generated data with governed ERP/MES/CMMS interfaces, move persistence t
 
 ## Supporting project documents
 
+- [PowerPoint presentation (download)](presentation/SmartForge-Technical-Presentation.pptx)
 - [Complete project and user guide](../README.md)
 - [Architecture](architecture.md)
 - [Scheduling model](scheduling-model.md)
 - [Assumptions and limitations](assumptions.md)
 - [Live defense question bank](defense-guide.md)
 - [Management trade-off memo](tradeoff-memo.md)
-
