@@ -1,8 +1,9 @@
 import { Suspense, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   Activity, AlertTriangle, BarChart3, BatteryCharging, Bell, Boxes, CalendarRange, ChevronLeft, ChevronRight,
-  CircleDollarSign, ClipboardCheck, Factory, Gauge, HardHat, LayoutDashboard, Menu, RadioTower, Search,
+  ChevronDown, CircleDollarSign, ClipboardCheck, Factory, Gauge, HardHat, LayoutDashboard, Menu, RadioTower, Search,
   Settings2, ShieldAlert, Sparkles, UsersRound, Wrench, X, Zap,
 } from 'lucide-react';
 import type { ConnectionMode } from '../types';
@@ -68,8 +69,10 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => Object.fromEntries(navGroups.map((group) => [group.label, true])));
   const location = useLocation();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const current = allEntries.find((entry) => location.pathname === entry.to || (entry.to !== '/' && location.pathname.startsWith(`${entry.to}/`)));
 
   function chooseResult(to: string) {
@@ -82,7 +85,7 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
         <div className="brand-row">
           <Link to="/control-tower" className="brand" onClick={() => setMobileOpen(false)}>
             <span className="brand-mark"><Factory /></span>
-            {!collapsed && <span><strong>SmartForge</strong><small>DECISION SUPPORT</small></span>}
+            {!collapsed && <span><strong>OptiForge</strong><small>SMARTFORGE OPERATIONS</small></span>}
           </Link>
           <button className="icon-button mobile-close" aria-label="Close navigation" onClick={() => setMobileOpen(false)}><X /></button>
         </div>
@@ -93,8 +96,8 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
         <nav className="nav-scroll">
           {navGroups.map((group) => (
             <div className="nav-group" key={group.label}>
-              {!collapsed && <div className="nav-label">{group.label}</div>}
-              {group.entries.map((entry) => {
+              {!collapsed && <button className="nav-label" type="button" aria-expanded={openGroups[group.label]} onClick={() => setOpenGroups((current) => ({ ...current, [group.label]: !current[group.label] }))}><span>{group.label}</span><ChevronDown /></button>}
+              {(collapsed || openGroups[group.label]) && group.entries.map((entry) => {
                 const Icon = entry.icon;
                 return (
                   <NavLink key={entry.to} to={entry.to} title={collapsed ? entry.label : undefined} onClick={() => setMobileOpen(false)} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -142,7 +145,15 @@ export function AppLayout({ connection }: { connection: ConnectionMode }) {
           <div><i className="signal signal-warning" /><span>Decision queue</span><strong>3 due before 10:00</strong></div>
           <div><i className="signal signal-good" /><span>Model</span><strong>Synced 42 sec ago</strong></div>
         </div>
-        <main className="main-content"><Suspense fallback={<LoadingState label="Loading workspace" />}><Outlet /></Suspense></main>
+        <motion.main
+          className="main-content"
+          key={location.pathname}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <Suspense fallback={<LoadingState label="Loading workspace" />}><Outlet /></Suspense>
+        </motion.main>
         <footer className="app-footer"><span>SmartForge planning model · Seed 42</span><span>Last validated schedule: 01 Sep 2026, 08:44</span></footer>
       </div>
       <CommandPalette items={commandItems} open={commandOpen} onOpenChange={setCommandOpen} onSelect={chooseResult} />

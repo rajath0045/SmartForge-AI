@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { Activity, AlertTriangle, ArrowRight, CalendarClock, Check, CircleGauge, GraduationCap, Search, ShieldCheck, UserCheck, UsersRound, Wrench } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { machines as fallbackMachines, operators as fallbackOperators } from '../data/demo';
@@ -11,13 +12,24 @@ const chartTooltip = { background: '#172733', border: '1px solid #2d4657', borde
 
 export function MachinesPage() {
   const { data: machines } = useAsyncData(api.machines, fallbackMachines);
-  const [selectedId, setSelectedId] = useState('GRIND-01');
+  const [selectedId, setSelectedId] = useState(fallbackMachines[0]?.id ?? 'GRIND-01');
   const [filter, setFilter] = useState('ALL');
+  const reduceMotion = useReducedMotion();
+  const bottleneck = useMemo(() => machines.reduce((highest, machine) => machine.utilization > highest.utilization ? machine : highest, machines[0]), [machines]);
   const selected = machines.find((machine) => machine.id === selectedId) ?? machines[0];
   const shown = machines.filter((machine) => filter === 'ALL' || machine.status === filter);
+  function openBottleneck() {
+    setFilter('ALL');
+    setSelectedId(bottleneck.id);
+    window.requestAnimationFrame(() => {
+      const detail = document.getElementById('machine-detail');
+      detail?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      detail?.focus({ preventScroll: true });
+    });
+  }
   return (
     <div className="page-stack">
-      <PageHeader kicker="EQUIPMENT DIGITAL TWIN" title="Machines" description="Current state, loading and operating context for all 14 finite-capacity resources." actions={<button className="button button-primary" onClick={() => setSelectedId('GRIND-01')}>Open bottleneck <ArrowRight /></button>} />
+      <PageHeader kicker="EQUIPMENT DIGITAL TWIN" title="Machines" description="Current state, loading and operating context for all 14 finite-capacity resources." actions={<button className="button button-primary" aria-controls="machine-detail" onClick={openBottleneck}>Open {bottleneck.id} bottleneck <ArrowRight /></button>} />
       <div className="machine-status-overview">
         {(['RUNNING', 'IDLE', 'SETUP', 'MAINTENANCE', 'BREAKDOWN'] as const).map((status) => <button key={status} className={filter === status ? 'active' : ''} onClick={() => setFilter(filter === status ? 'ALL' : status)}><Badge tone={status} dot>{status}</Badge><strong>{machines.filter((machine) => machine.status === status).length}</strong></button>)}
       </div>
@@ -25,7 +37,7 @@ export function MachinesPage() {
         <Panel className="machine-list-panel flush-panel">
           <div className="machine-grid">{shown.map((machine) => <button key={machine.id} className={`machine-card ${selected.id === machine.id ? 'selected' : ''}`} onClick={() => setSelectedId(machine.id)}><div className="machine-card-head"><span className={`machine-glyph health-${machine.healthScore < 70 ? 'critical' : machine.healthScore < 82 ? 'warning' : 'healthy'}`}><Wrench /></span><Badge tone={machine.status} dot>{machine.status}</Badge></div><h3>{machine.id}</h3><p>{machine.type}</p><div className="machine-running"><span>{machine.currentOrder ?? 'No active job'}</span><strong>{machine.utilization}% load</strong></div><Progress value={machine.utilization} /><div className="machine-foot"><span>OEE <strong>{machine.oee}%</strong></span><span>Health <strong>{machine.healthScore}</strong></span></div></button>)}</div>
         </Panel>
-        <Panel className="machine-detail" eyebrow="RESOURCE DETAIL" title={selected.id} action={<Badge tone={selected.healthScore < 70 ? 'critical' : selected.healthScore < 82 ? 'warning' : 'healthy'}>{selected.healthScore}/100 HEALTH</Badge>}>
+        <Panel id="machine-detail" tabIndex={-1} className={`machine-detail ${selected.id === bottleneck.id ? 'bottleneck-selected' : ''}`} eyebrow={selected.id === bottleneck.id ? 'BOTTLENECK RESOURCE DETAIL' : 'RESOURCE DETAIL'} title={selected.id} action={<Badge tone={selected.healthScore < 70 ? 'critical' : selected.healthScore < 82 ? 'warning' : 'healthy'}>{selected.healthScore}/100 HEALTH</Badge>}>
           <div className="detail-machine-state"><span className={`machine-big-icon health-${selected.healthScore < 70 ? 'critical' : selected.healthScore < 82 ? 'warning' : 'healthy'}`}><Wrench /></span><div><small>CURRENT STATE</small><strong>{selected.status}</strong><span>{selected.currentOrder ? `${selected.currentOrder} in process` : 'Available for dispatch'}</span></div></div>
           <div className="detail-gauges"><div><span>14-day load</span><strong>{selected.utilization}%</strong><Progress value={selected.utilization} /></div><div><span>Simplified OEE</span><strong>{selected.oee}%</strong><Progress value={selected.oee} tone="normal" /></div></div>
           <div className="resource-list"><MetricRow label="Queue waiting" value={`${selected.queueHours} hours`} tone={selected.queueHours > 30 ? 'critical' : undefined} /><MetricRow label="Qualified operators" value={String(selected.qualifiedOperators)} /><MetricRow label="Power draw" value={`${selected.powerKw} kW`} /><MetricRow label="Total running hours" value={selected.runHours.toLocaleString('en-IN')} /><MetricRow label="MTBF / MTTR" value={`${selected.mtbf} h / ${selected.mttr} h`} /><MetricRow label="Next maintenance" value={selected.nextMaintenance} /></div>

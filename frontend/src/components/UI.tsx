@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowDownRight, ArrowUpRight, ChevronRight, CircleAlert, LoaderCircle } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { RiskLevel } from '../types';
 import { AnimatedMetric } from './AnimatedMetric';
 
@@ -31,9 +32,9 @@ export function SeverityBadge({ level }: { level: RiskLevel }) {
   return <Badge tone={level} dot>{level}</Badge>;
 }
 
-export function Panel({ children, className = '', title, eyebrow, action }: { children: ReactNode; className?: string; title?: string; eyebrow?: string; action?: ReactNode }) {
+export function Panel({ children, className = '', title, eyebrow, action, id, tabIndex }: { children: ReactNode; className?: string; title?: string; eyebrow?: string; action?: ReactNode; id?: string; tabIndex?: number }) {
   return (
-    <section className={`panel ${className}`}>
+    <section className={`panel ${className}`} id={id} tabIndex={tabIndex}>
       {(title || eyebrow || action) && (
         <div className="panel-heading">
           <div>
@@ -57,14 +58,23 @@ export function PageHeader({ title, description, kicker, actions }: { title: str
         <p>{description}</p>
       </div>
       {actions && <div className="page-actions">{actions}</div>}
+      <span className="page-header-signal" aria-hidden="true"><i /><i /><i /></span>
     </header>
   );
 }
 
 export function KpiCard({ label, value, detail, trend, trendLabel, tone = 'default', icon }: { label: string; value: string; detail?: string; trend?: number; trendLabel?: string; tone?: string; icon?: ReactNode }) {
   const positive = (trend ?? 0) >= 0;
+  const reduceMotion = useReducedMotion();
   return (
-    <div className={`kpi-card kpi-${tone}`} data-tone={tone}>
+    <motion.div
+      className={`kpi-card kpi-${tone}`}
+      data-tone={tone}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={reduceMotion ? undefined : { y: -3 }}
+      transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="kpi-top">
         <span>{label}</span>
         {icon && <span className="kpi-icon">{icon}</span>}
@@ -76,7 +86,7 @@ export function KpiCard({ label, value, detail, trend, trendLabel, tone = 'defau
           <span>{trendLabel ?? detail}</span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

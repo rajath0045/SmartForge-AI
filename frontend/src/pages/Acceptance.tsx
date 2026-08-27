@@ -1,10 +1,19 @@
-import { FormEvent, useState } from 'react';
-import { ArrowRight, BadgeIndianRupee, CalendarCheck, Check, CircleHelp, Factory, LoaderCircle, RotateCcw, ShieldCheck, TriangleAlert, X } from 'lucide-react';
+import { FormEvent, useState, type CSSProperties } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { ArrowRight, BadgeIndianRupee, CalendarCheck, Check, CircleHelp, Factory, Gauge, LoaderCircle, PackageCheck, RotateCcw, ShieldCheck, TriangleAlert, UsersRound, X, Zap } from 'lucide-react';
 import { api } from '../services/api';
 import type { RfqInput, RfqResult, Tier } from '../types';
 import { Badge, MetricRow, money, PageHeader, Panel, Progress } from '../components/UI';
 
 const operations = ['Turning', 'Milling', 'Drilling', 'Grinding', 'Inspection'];
+const decisionGates = [
+  { label: 'Capacity', icon: Gauge },
+  { label: 'Labour', icon: UsersRound },
+  { label: 'Power', icon: Zap },
+  { label: 'Material', icon: PackageCheck },
+  { label: 'Risk', icon: ShieldCheck },
+  { label: 'Economics', icon: BadgeIndianRupee },
+];
 const initialInput: RfqInput = {
   customer: 'Apex Driveline',
   tier: 'Tier 1',
@@ -22,8 +31,9 @@ export function AcceptancePage() {
   const [result, setResult] = useState<RfqResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const reduceMotion = useReducedMotion();
 
-  function update<K extends keyof RfqInput>(key: K, value: RfqInput[K]) { setInput((current) => ({ ...current, [key]: value })); }
+  function update<K extends keyof RfqInput>(key: K, value: RfqInput[K]) { setInput((current) => ({ ...current, [key]: value })); setResult(null); }
   function toggleOperation(operation: string) {
     update('operations', input.operations.includes(operation) ? input.operations.filter((item) => item !== operation) : [...input.operations, operation]);
   }
@@ -39,6 +49,11 @@ export function AcceptancePage() {
   return (
     <div className="page-stack acceptance-page">
       <PageHeader kicker="CAPABLE-TO-PROMISE" title="Smart order acceptance" description="Insert a candidate order into current finite capacity, then compare its contribution against the risk it creates for existing commitments." actions={<button className="button button-secondary" onClick={() => { setInput(initialInput); setResult(null); }}><RotateCcw />Reset example</button>} />
+      <div className={`decision-scan ${loading ? 'is-scanning' : result ? 'is-complete' : 'is-ready'}`} role="status" aria-label={loading ? 'Evaluating order decision gates' : result ? 'All order decision gates evaluated' : 'Order decision gates ready'}>
+        <div className="decision-scan-intro"><span>01</span><div><small>DECISION ENGINE</small><strong>{loading ? 'Calculating feasible promise' : result ? 'Evaluation complete' : 'Six-gate evaluation ready'}</strong></div></div>
+        <div className="decision-gates">{decisionGates.map((gate, index) => <div key={gate.label} style={{ '--gate-index': index } as CSSProperties}><span><gate.icon /></span><small>{gate.label}</small>{result && <Check />}</div>)}</div>
+        <div className="decision-scan-status"><span>{result ? '100' : loading ? 'CALC' : 'READY'}</span><small>{result ? 'confidence model resolved' : loading ? 'finite-capacity pass' : 'awaiting evaluation'}</small></div>
+      </div>
       <div className="acceptance-layout">
         <Panel className="rfq-form-panel" eyebrow="NEW REQUEST FOR QUOTE" title="Commercial and routing inputs">
           <form onSubmit={evaluate} className="form-stack">
@@ -59,12 +74,14 @@ export function AcceptancePage() {
         </Panel>
 
         <div className="acceptance-result">
-          {!result ? (
+          <AnimatePresence mode="wait" initial={false}>{!result ? (
+            <motion.div key="placeholder" initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduceMotion ? undefined : { opacity: 0 }}>
             <Panel className="result-placeholder">
               <div className="placeholder-icon"><Factory /></div><h2>Ready to evaluate</h2><p>The calculation checks machine hours, qualified labour, material timing, power economics and penalty risk across the current schedule.</p>
               <div className="method-list"><span><Check />Finite machine capacity</span><span><Check />Operator qualifications</span><span><Check />Existing Tier-1 exposure</span><span><Check />Expected contribution margin</span></div>
             </Panel>
-          ) : <AcceptanceResult result={result} />}
+            </motion.div>
+          ) : <motion.div key="result" initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .42, ease: [0.22, 1, 0.36, 1] }}><AcceptanceResult result={result} /></motion.div>}</AnimatePresence>
         </div>
       </div>
     </div>
